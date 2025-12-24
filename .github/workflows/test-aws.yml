@@ -1,0 +1,27 @@
+name: Test connexion AWS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Configurer les identifiants AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Vérifier l'identité (STS)
+        run: aws sts get-caller-identity
+
+      - name: Lister le bucket S3
+        run: aws s3 ls s3://${{ secrets.S3_BUCKET }}/
+
+      - name: Lister les dépôts ECR
+        run: aws ecr describe-repositories
