@@ -1,12 +1,11 @@
 import argparse
-import os
 from pathlib import Path
 from urllib.parse import urlparse
 
 import boto3
 import pandas as pd
 
-from .clean_transform import SplitConfig, build_reference_stats, clean_transform, save_dataframe, save_json
+from .clean_transform import SplitConfig, build_reference_stats, clean_transform, save_dataframe, save_json, split_train_test
 
 
 def _download_from_s3(s3_uri: str, dest: Path) -> Path:
@@ -42,7 +41,7 @@ def main():
     sort_col = args.sort_col.strip() if args.sort_col is not None else ""
     sort_col = sort_col if sort_col else None
 
-    train_df, test_df = split_train_test(df, SplitConfig(test_size=args.test_size, sort_col=sort_col))
+    train_df, test_df = split_train_test(df, SplitConfig(test_size=args.test_size))
 
     out_dir = Path(args.out_dir)
     save_dataframe(train_df, out_dir / f"train.{args.fmt}", fmt=args.fmt)
@@ -55,10 +54,6 @@ def main():
     print(f"Saved: {out_dir / f'train.{args.fmt}'}")
     print(f"Saved: {out_dir / f'test.{args.fmt}'}")
     print(f"Saved: {args.stats_path}")
-
-
-def split_train_test(df, cfg):
-    return __import__("src.data.clean_transform", fromlist=["split_train_test"]).split_train_test(df, cfg)
 
 
 if __name__ == "__main__":

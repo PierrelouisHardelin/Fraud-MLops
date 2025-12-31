@@ -2,6 +2,8 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Optional, Tuple
+from sklearn.model_selection import train_test_split
+
 
 import numpy as np
 import pandas as pd
@@ -10,7 +12,9 @@ import pandas as pd
 @dataclass(frozen=True)
 class SplitConfig:
     test_size: float = 0.2
-    sort_col: Optional[str] = "id"
+    random_state: int = 42
+    stratify: bool = True
+
 
 
 def _ensure_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -46,17 +50,18 @@ def _feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
 
 def split_train_test(df: pd.DataFrame, cfg: SplitConfig) -> Tuple[pd.DataFrame, pd.DataFrame]:
     df = df.copy()
-    if cfg.sort_col and cfg.sort_col in df.columns:
-        df = df.sort_values(cfg.sort_col, kind="mergesort")
-    else:
-        df = df.reset_index(drop=True)
+    y = df["Class"] if cfg.stratify else None
 
-    n = len(df)
-    n_test = int(np.ceil(cfg.test_size * n))
-    n_train = n - n_test
-    train_df = df.iloc[:n_train].reset_index(drop=True)
-    test_df = df.iloc[n_train:].reset_index(drop=True)
-    return train_df, test_df
+    train_df, test_df = train_test_split(
+        df,
+        test_size=cfg.test_size,
+        random_state=cfg.random_state,
+        shuffle=True,
+        stratify=y,
+    )
+
+    return train_df.reset_index(drop=True), test_df.reset_index(drop=True)
+
 
 
 def build_reference_stats(df: pd.DataFrame, cols=("Amount", "log_amount")) -> Dict:
