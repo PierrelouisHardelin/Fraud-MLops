@@ -172,7 +172,7 @@ Copier-coller le JSON obtenu dans `/docs` → `/predict` → **Try it out**, ou 
 
 ```bash
 # 1) Build dataset
-python -m src.data.make_dataset --input s3://YOUR_BUCKET/YOUR_KEY/creditcard_2023.csv --fmt parquet
+python -m src.data.make_dataset --input s3://s3-g3gm03/raw/creditcard_2023.csv --fmt parquet
 
 # 2) Train
 python -m src.models.train --fmt parquet
