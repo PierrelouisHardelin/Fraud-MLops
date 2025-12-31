@@ -1,0 +1,40 @@
+name: Build and push to ECR
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # OPTION A: si ton modèle est déjà dans le repo, rien à faire ici.
+      # OPTION B (plus propre): si ton modèle est sur S3, dé-commente et adapte :
+      # - name: Download model from S3
+      #   run: |
+      #     mkdir -p models
+      #     aws s3 cp s3://TON_BUCKET/TON_KEY/model.joblib models/model.joblib
+
+      - name: Build and push image
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+        run: |
+          IMAGE_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY
+          docker build -t $IMAGE_URI:latest .
+          docker push $IMAGE_URI:latest
